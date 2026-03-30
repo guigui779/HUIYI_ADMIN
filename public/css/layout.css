@@ -1,0 +1,112 @@
+.page {
+	width: min(1500px, calc(100vw - 24px));
+	margin: 12px auto 20px;
+	display: grid;
+	gap: 16px;
+}
+
+/* Grid System */
+.grid {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.span-12 { grid-column: span 12; }
+.span-8 { grid-column: span 8; }
+.span-6 { grid-column: span 6; }
+.span-4 { grid-column: span 4; }
+
+/* Toolbar */
+.toolbar {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	margin-top: 14px;
+}
+
+.pill-row, .button-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+/* Grid Layouts */
+.stat-grid {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.form-grid, .sub-grid {
+	display: grid;
+	gap: 12px;
+}
+
+.form-grid.two, .sub-grid.two {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid.form-block {
+	column-gap: 14px;
+	row-gap: 18px;
+}
+
+/* Config Layout */
+.config-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.config-form {
+	display: grid;
+	gap: 14px;
+	align-content: start;
+}
+
+.config-form.form-block {
+	column-gap: 14px;
+	row-gap: 18px;
+}
+
+/* Tester Layout */
+.tester-layout {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	align-items: stretch;
+}
+
+/* Saved Stack */
+.saved-stack {
+	display: grid;
+	grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr) 120px;
+	gap: 14px;
+	align-items: stretch;
+}
+
+/* Actions */
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.actions.form-actions-row {
+	margin-top: 4px;
+}
+
+.actions.operations-actions {
+	margin-top: 18px;
+}
+
+/* Utilities */
+.form-span-all {
+	grid-column: 1 / -1;
+}
+
+.hidden-card { display: none !important; }
+.is-hidden { display: none !important; }
