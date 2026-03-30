@@ -1,11 +1,6 @@
 // 调用外部音视频 API 的模块
 import { getSetting, getSettingsByPrefix, setSetting } from './adminStore';
 
-export interface ExternalApiConfig {
-  url: string;
-  secret: string;
-}
-
 export interface ApiResponse<T = unknown> {
   ok: boolean;
   data?: T;
@@ -26,18 +21,6 @@ type CreateInviteCodeResponse = {
   codes: string[];
   raw: unknown;
 };
-
-// 获取当前配置的 API 地址
-export async function getApiConfig(): Promise<ExternalApiConfig | null> {
-  const [url, secret, legacySecret] = await Promise.all([
-    getSetting('api_url'),
-    getSetting('api_secret'),
-    getSetting('api_key'),
-  ]);
-
-  if (!url) return null;
-  return { url: url.replace(/\/$/, ''), secret: secret || legacySecret || '' };
-}
 
 // 对单个地址发起请求，成功返回 { url, response }，失败返回 null
 async function tryFetch(
@@ -104,11 +87,9 @@ export async function callExternalApi<T = unknown>(
     write?: boolean;
   } = {}
 ): Promise<ApiResponse<T>> {
-  const [activeUrlRaw, writeUrlRaw, secret, legacySecret, backups] = await Promise.all([
+  const [activeUrlRaw, writeUrlRaw, backups] = await Promise.all([
     getSetting('api_url'),
     getSetting('api_url_write'),
-    getSetting('api_secret'),
-    getSetting('api_key'),
     options.write ? Promise.resolve([]) : getSettingsByPrefix('api_url_backup'),
   ]);
 
@@ -116,7 +97,7 @@ export async function callExternalApi<T = unknown>(
     return { ok: false, error: '音视频 API 地址未配置' };
   }
 
-  const apiSecret = secret || legacySecret || '';
+  const apiSecret = process.env.API_SECRET?.trim() || '';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (apiSecret) headers['X-API-Secret'] = apiSecret;
 

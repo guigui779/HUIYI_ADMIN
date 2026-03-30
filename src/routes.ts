@@ -1,7 +1,7 @@
 import { Router, Request, Response, RequestHandler } from 'express';
 import { registerBackofficeRoutes } from './backofficeRouter';
 import { createConsoleTokenAsync, isConsoleLoginConfiguredAsync, readBearerToken, verifyConsoleToken, changeConsolePassword } from './consoleAuth';
-import { deleteExpiredCodes, assignInviteCodes, getSetting, setSetting, getCodeDetail, markCodeUnused } from './adminStore';
+import { deleteExpiredCodes, assignInviteCodes, getSetting, setSetting, getCodeDetail, markCodeUnused, getSettingsByPrefix } from './adminStore';
 import * as externalApi from './externalApi';
 
 type AsyncHandler = (req: Request, res: Response) => Promise<void>;
@@ -23,6 +23,17 @@ export function createRouter(): Router {
     if (!adminSecret || secret !== adminSecret) { res.status(401).json({ error: '无效的 API 密钥' }); return; }
     next();
   };
+
+  // ─── 公开接口（客户端拉配置，无需鉴权） ─────────────────────────────────────
+
+  router.get('/config', wrap(async (_req, res) => {
+    const apiUrl = await getSetting('api_url') || '';
+    const backups = await getSettingsByPrefix('api_url_backup');
+    res.json({
+      api_url: apiUrl,
+      backup_urls: backups.map(b => b.value).filter(Boolean),
+    });
+  }));
 
   // ─── 认证 ──────────────────────────────────────────────────────────────────
 
@@ -69,24 +80,13 @@ export function createRouter(): Router {
 
   // ─── 配置 ──────────────────────────────────────────────────────────────────
 
-  router.get('/config', requireAdmin, wrap(async (_req, res) => {
-    const [apiUrl, apiSecret, apiKeyLegacy] = await Promise.all([
-      getSetting('api_url'),
-      getSetting('api_secret'),
-      getSetting('api_key'),
-    ]);
-    res.json({ apiUrl: apiUrl || '', apiKey: apiSecret || apiKeyLegacy || '' });
-  }));
-
   router.post('/config', requireAdmin, wrap(async (req, res) => {
     const apiUrl = String(req.body.apiUrl || '').trim();
-    const apiKey = String(req.body.apiKey || '').trim();
     const ops: Promise<boolean>[] = [];
     if (apiUrl) ops.push(setSetting('api_url', apiUrl), setSetting('api_url_main', apiUrl));
-    if (apiKey) ops.push(setSetting('api_key', apiKey), setSetting('api_secret', apiKey));
     const results = await Promise.all(ops);
     if (results.some(r => !r)) { res.status(500).json({ error: '保存失败' }); return; }
-    res.json({ ok: true, apiUrl, apiKey });
+    res.json({ ok: true, apiUrl });
   }));
 
   // ─── 外部 API 代理 ─────────────────────────────────────────────────────────

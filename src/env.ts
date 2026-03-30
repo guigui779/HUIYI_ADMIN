@@ -3,14 +3,6 @@ function readEnv(name: string): string | undefined {
   return value ? value : undefined;
 }
 
-export function requireEnv(name: string): string {
-  const value = readEnv(name);
-  if (!value) {
-    throw new Error(`缺少环境变量: ${name}`);
-  }
-  return value;
-}
-
 export function readIntEnv(name: string, fallback: number): number {
   const raw = readEnv(name);
   if (!raw) {
@@ -23,17 +15,4 @@ export function readIntEnv(name: string, fallback: number): number {
   }
 
   return parsed;
-}
-
-export function readOptionalServerConfig(prefix: string) {
-  const host = readEnv(`${prefix}_HOST`);
-  if (!host) {
-    return null;
-  }
-
-  return {
-    host,
-    apiKey: requireEnv(`${prefix}_API_KEY`),
-    apiSecret: requireEnv(`${prefix}_API_SECRET`),
-  };
 }

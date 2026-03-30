@@ -72,24 +72,23 @@ export function registerBackofficeRoutes(router: Router, requireAdmin: RequestHa
   // ─── API URL 管理 ─────────────────────────────────────────────────────────
 
   router.get('/api-urls', requireAdmin, wrap(async (_req, res) => {
-    const [currentRaw, mainRaw, secretRaw, backups] = await Promise.all([
-      getSetting('api_url'), getSetting('api_url_main'), getSetting('api_secret'),
+    const [currentRaw, mainRaw, backups] = await Promise.all([
+      getSetting('api_url'), getSetting('api_url_main'),
       getSettingsByPrefix('api_url_backup'),
     ]);
     res.json({
       currentUrl: normalizeUrl(currentRaw || '') || '',
       mainUrl: normalizeUrl(mainRaw || '') || '',
-      apiSecret: secretRaw?.trim() || process.env.API_SECRET?.trim() || '',
+      apiSecret: process.env.API_SECRET?.trim() || '',
       backups: backups.map(b => ({ key: b.key, value: normalizeUrl(b.value) || '' })).filter(b => b.value),
     });
   }));
 
   router.put('/api-urls/main', requireAdmin, wrap(async (req, res) => {
     const rawUrl = str(req.body.url);
-    const secret = typeof req.body.secret === 'string' ? req.body.secret.trim() : null;
 
     if (rawUrl === '') {
-      const results = await Promise.all(['api_url_main', 'api_url', 'api_secret', 'api_key'].map(k => setSetting(k, '')));
+      const results = await Promise.all(['api_url_main', 'api_url'].map(k => setSetting(k, '')));
       if (results.some(r => !r)) { res.status(500).json({ error: '清空配置失败' }); return; }
       res.json({ ok: true, currentUrl: '', mainUrl: '', cleared: true }); return;
     }
@@ -98,7 +97,6 @@ export function registerBackofficeRoutes(router: Router, requireAdmin: RequestHa
     if (!url) { res.status(400).json({ error: '接口地址格式错误，请以 http:// 或 https:// 开头' }); return; }
 
     const ops: Promise<boolean>[] = [setSetting('api_url_main', url), setSetting('api_url', url)];
-    if (secret !== null) ops.push(setSetting('api_secret', secret), setSetting('api_key', secret));
     if ((await Promise.all(ops)).some(r => !r)) { res.status(500).json({ error: '保存使用中失败' }); return; }
     res.json({ ok: true, currentUrl: url, mainUrl: url });
   }));

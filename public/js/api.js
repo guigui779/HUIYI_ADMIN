@@ -1,4 +1,4 @@
-// 通义听悟管理后台 - API 模块
+// 云际听悟管理后台 - API 模块
 (function(window) {
 	'use strict';
 

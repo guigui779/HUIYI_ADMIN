@@ -1,4 +1,4 @@
-# 通义听悟管理后台 - 部署指南
+# 云际听悟管理后台 - 部署指南
 
 ## 📋 部署前准备
 
@@ -174,7 +174,7 @@ curl -X POST https://your-app.railway.app/console/auth/init \
 ## 📁 文件结构
 
 ```
-通义听悟管理后台/
+云际听悟管理后台/
 ├── api/                          # 后端代码
 │   ├── src/                      # TypeScript 源码
 │   │   ├── index.ts              # 入口文件

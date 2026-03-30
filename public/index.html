@@ -3,14 +3,14 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>通义听悟工作台</title>
+	<title>云际听悟工作台</title>
 	<link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
 	<!-- 登录覆盖层 -->
 	<div class="login-overlay" id="loginOverlay">
 		<div class="login-box">
-			<h2>通义听悟</h2>
+			<h2>云际听悟</h2>
 			<p>管理后台登录</p>
 			<div class="login-error" id="loginError"></div>
 			<form id="loginForm">
@@ -56,7 +56,7 @@
 	<div class="page" id="appPage" style="display:none">
 		<!-- 头部 -->
 		<section class="hero">
-			<h1>通义听悟 | 管理后台</h1>
+			<h1>云际听悟 | 管理后台</h1>
 			<p>统一管理授权码、API配置和系统功能</p>
 			<div class="toolbar">
 				<div class="pill-row">
@@ -107,17 +107,13 @@
 				<div class="card-head">
 					<div>
 						<h2>外部API配置</h2>
-						<p class="muted">配置音视频API地址和密钥</p>
+						<p class="muted">配置音视频API接口地址</p>
 					</div>					<div class="actions">
 						<button class="btn-secondary" id="checkAllUrlsBtn" type="button">检测全部</button>
 					</div>				</div>
 				<div class="result-box saved-panel">
 					<div id="apiUrlsGrid" class="api-urls-grid"></div>
 					<div class="api-meta-row">
-						<div class="saved-item">
-							<div class="saved-label">当前密钥</div>
-							<div class="mono saved-value compact" id="currentSecretDisplay">未配置</div>
-						</div>
 						<div class="saved-item">
 							<div class="saved-label">连接状态</div>
 							<div class="status-indicator">
@@ -142,11 +138,7 @@
 						<input name="base" placeholder="https://api.example.com" />
 						<div class="field-hint" id="apiUrlHint">首次填写将保存为使用中</div>
 					</div>
-					<div class="field" id="apiSecretField">
-						<label>API Secret</label>
-						<input id="apiSecretInput" name="secret" placeholder="输入API密钥" />
-						<div class="field-hint">提示：此密钥必须与外部API配置完全一致</div>
-					</div>
+
 					<div class="actions form-actions-row">
 						<button class="btn-primary config-submit" id="apiSubmitBtn" type="submit">保存并连接</button>
 					</div>

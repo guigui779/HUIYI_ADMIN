@@ -5,7 +5,7 @@
 // ── 状态 ──────────────────────────────────────────────────────────────────
 var state = {
 db: { stats: null, codes: [], connected: false },
-api: { base: '', secret: '', backups: [], health: null, rooms: [] },
+api: { base: '', backups: [], health: null, rooms: [] },
 ui: { apiReady: false, apiReachable: false }
 };
 
@@ -26,7 +26,7 @@ return data;
 }
 
 function apiRequest(path, opts) {
-return window.HuiyiApi.request(state.api.base, state.api.secret, path, opts);
+return window.HuiyiApi.request(state.api.base, '', path, opts);
 }
 
 function toast(msg, type) {
@@ -63,11 +63,6 @@ card.querySelectorAll('.badge-api-connected').forEach(function (badge) {
 badge.style.display = on ? '' : 'none';
 });
 });
-}
-
-function maskSecret(v) {
-if (!v) return '未配置';
-return v.length <= 8 ? '*'.repeat(v.length) : v.slice(0, 4) + '****' + v.slice(-4);
 }
 
 function formatCountdown(expiresAt) {
@@ -140,7 +135,6 @@ try {
 var data = await authedJson('/console/api-urls');
 var url = window.HuiyiApi.normalizeBase(data.mainUrl || data.currentUrl || '');
 if (url) state.api.base = url;
-if (data.apiSecret) state.api.secret = data.apiSecret;
 saveState();
 await loadBackupUrls();
 } catch (e) {
@@ -161,12 +155,11 @@ function loadState() {
 try {
 var raw = JSON.parse(localStorage.getItem(window.HuiyiConfig.STORAGE_KEY) || '{}');
 state.api.base = window.HuiyiApi.normalizeBase((raw.api && raw.api.base) || '');
-state.api.secret = (raw.api && raw.api.secret) || '';
 } catch (e) { /* ignore */ }
 }
 
 function saveState() {
-localStorage.setItem(window.HuiyiConfig.STORAGE_KEY, JSON.stringify({ api: { base: state.api.base, secret: state.api.secret } }));
+localStorage.setItem(window.HuiyiConfig.STORAGE_KEY, JSON.stringify({ api: { base: state.api.base } }));
 }
 
 // ── 渲染 ──────────────────────────────────────────────────────────────────
@@ -183,11 +176,10 @@ setText('expiredCount', stats.expired != null ? stats.expired : '-');
 		var apiReachable = state.ui.apiReachable;
 pill('apiState', state.api.base ? ('API: ' + state.api.base) : 'API: 未配置', apiOk ? 'ok' : (apiReachable ? 'warn' : 'danger'));
 
-		setText('currentSecretDisplay', maskSecret(state.api.secret));
 		var statusDot = document.getElementById('currentStatusDot');
 		var statusText = document.getElementById('connectionStatusText');
 		if (statusDot) statusDot.className = 'status-dot ' + (apiOk ? 'ok' : (apiReachable ? 'warn' : 'danger'));
-		if (statusText) statusText.textContent = apiOk ? '已连接' : (apiReachable ? '可达·密钥错误' : '未连接');
+		if (statusText) statusText.textContent = apiOk ? '已连接' : (apiReachable ? '可达·认证失败' : '未连接');
 
 		renderCodes();
 		renderApiUrls();
@@ -281,18 +273,16 @@ function updateApiFormButtons() {
 var hasMain = !!state.api.base;
 var submitBtn = document.getElementById('apiSubmitBtn');
 var hintEl = document.getElementById('apiUrlHint');
-var secretField = document.getElementById('apiSecretField');
 if (submitBtn) submitBtn.textContent = hasMain ? '添加接口' : '保存并连接';
 if (hintEl) hintEl.textContent = hasMain ? '已有使用中 — 新地址将自动添加为备用接口' : '首次填写将保存为使用中';
-if (secretField) secretField.style.display = hasMain ? 'none' : '';
 }
 
 // ── 业务操作 ──────────────────────────────────────────────────────────────
-async function saveApiConfig(url, secret) {
+async function saveApiConfig(url) {
 return authedJson('/console/api-urls/main', {
 method: 'PUT',
 headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ url: url, secret: secret })
+body: JSON.stringify({ url: url })
 });
 }
 
@@ -310,9 +300,8 @@ return authedJson('/console/api-urls/backups/' + encodeURIComponent(key), { meth
 
 async function clearApiConfig() {
 if (!confirm('确定要清空 API 配置？')) return;
-await saveApiConfig('', '');
+await saveApiConfig('');
 state.api.base = '';
-state.api.secret = '';
 state.api.backups = [];
 state.api.rooms = [];
 state.ui.apiReady = false;
@@ -382,7 +371,7 @@ await refreshAll();
 async function refreshAll() {
 await loadDatabaseData();
 await syncConfigFromBackend();
-if (state.api.base && state.api.secret) {
+if (state.api.base) {
 try { await loadApiData(); } catch (e) { console.warn('API刷新失败:', e); }
 }
 renderState();
@@ -442,7 +431,6 @@ function bindEvents() {
 document.getElementById('apiConfigForm').addEventListener('submit', async function (e) {
 e.preventDefault();
 var newUrl = window.HuiyiApi.normalizeBase(this.base.value);
-var newSecret = (document.getElementById('apiSecretInput') || {}).value;
 if (!newUrl) { toast('请填写有效的接口地址', 'error'); return; }
 try {
 if (state.api.base) {
@@ -452,11 +440,9 @@ toast('备用接口已添加', 'ok');
 await loadBackupUrls();
 renderApiUrls();
 } else {
-if (!newSecret || !newSecret.trim()) { toast('请填写 API Secret', 'error'); return; }
 state.api.base = newUrl;
-state.api.secret = newSecret.trim();
 saveState();
-await saveApiConfig(newUrl, newSecret.trim());
+await saveApiConfig(newUrl);
 await refreshAll();
 toast('API 配置已保存', 'ok');
 }
@@ -611,13 +597,13 @@ await loadBackupUrls();
 renderState();
 
 await syncConfigFromBackend();
-if (state.api.base && state.api.secret) {
+if (state.api.base) {
 try {
 await loadApiData();
 if (state.ui.apiReady) {
 pill('syncState', 'API 已连接', 'ok');
 } else if (state.ui.apiReachable) {
-pill('syncState', 'API 可达·密钥认证失败', 'warn');
+pill('syncState', 'API 可达·认证失败', 'warn');
 } else {
 pill('syncState', 'API 连接失败（仅数据库模式）', 'danger');
 }
